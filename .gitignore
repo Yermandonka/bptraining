@@ -1,0 +1,9 @@
+# pesado o regenerable
+node_modules/
+.venv/
+# grabaciones de rondas (salen otras personas) y material de terceros (Debateca, manual CMUDE)
+audios/
+Debateca 2026/
+Manual CMUDE 2026.pdf
+# modelo de transcripción descargado
+.models/
