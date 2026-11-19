@@ -6,13 +6,16 @@
 // ============================================================
 window.PLAN_DATA = (() => {
 
+const jp = typeof window.location !== 'undefined' && new URLSearchParams(window.location.search).get('perfil') === 'jp';
+
 const CONFIG = {
-  nombre: 'Germán',
+  perfil: jp ? 'jp' : 'german',
+  nombre: jp ? 'JP' : 'Germán',
   inicio: '2026-11-09',          // lunes de la semana 1
   fin: '2027-06-25',
   objetivoSpks: 77,
-  baselineSpks: 72.6,            // media histórica (63 rondas, bpringaos)
-  baselineUltimo: 70.0,          // Elías Ahuja 2026
+  baselineSpks: jp ? null : 72.6,            // media histórica (63 rondas, bpringaos)
+  baselineUltimo: jp ? null : 70.0,          // Elías Ahuja 2026
   version: 3,
   cargaLigeraDesde: '2026-11-10',  // desde este día las tareas pesan menos (unos 45 min al día en vez de 60) y dan el mismo XP
 };
@@ -26,7 +29,7 @@ const PHASES = [
   { id:'F0', nombre:'Navidad (modo Chris)', color:'#8b5cf6', semanas:[7,8], lema:'Descansar también es entrenar. Casi.',
     desc:'Dos semanas ligeras y opcionales: una final de CMUDE con palomitas y un capítulo de "Ganar debates".' },
   { id:'F2', nombre:'Cámaras Bajas',    color:'#ffd23f', semanas:[9,14],  lema:'La extensión no es un adorno, es el caso.',
-    desc:'Tu rol más flojo según los datos (extensionista: 70,9 en BO, 71,5 en BG). Extensiones, látigos y comparativas de bancada hasta que salgan solas. Termina con Murcia.' },
+    desc:(jp ? '' : 'Tu rol más flojo según los datos (extensionista: 70,9 en BO, 71,5 en BG). ') + 'Extensiones, látigos y comparativas de bancada hasta que salgan solas. Termina con Murcia.' },
   { id:'F3', nombre:'Choques',          color:'#ff5c8a', semanas:[15,20], lema:'Gana el choque, no el minuto.',
     desc:'Encuadres, resolución de choques, principios, modelos y contrafácticos. Comunícate, Regenta y Complu caen aquí: redo de tus discursos tras cada torneo.' },
   { id:'F4', nombre:'La Toga',          color:'#60a5fa', semanas:[21,24], lema:'De trainee a principal se sale razonando en voz alta.',
@@ -53,7 +56,7 @@ const TOURNAMENTS = [
 ];
 
 // ---------- Historial real (bpringaos) ----------
-const HISTORY = [
+const HISTORY = jp ? [] : [
   { t:'Aquinas-Roncalli 2025', fecha:'2025-02-14', avg:70.6, tavg:70.12, pts:11, n:5, nota:'Break a semis' },
   { t:'V BP Comunícate', fecha:'2025-02-28', avg:72.0, tavg:74.91, pts:4, n:5, nota:'Break novato' },
   { t:'IV BP Mendel', fecha:'2025-03-21', avg:69.2, tavg:73.34, pts:7, n:5, nota:'Campeón novato' },
@@ -99,14 +102,16 @@ const WEAKNESSES = [
 
 // ---------- Recursos frecuentes ----------
 const R = {
-  manual: { t:'Manual CMUDE 2026 (PDF local)', u:'../Manual CMUDE 2026.pdf' },
+  manual: jp ? { t:'Manual CMUDE 2026 (oficial)', u:'https://drive.google.com/file/d/1pd-wf2fesLXxPpvdWnSxDxrlGxfH90Pg/view?usp=sharing' }
+             : { t:'Manual CMUDE 2026 (PDF local)', u:'../Manual CMUDE 2026.pdf' },
   ganar:  { t:'Libro "Ganar debates" (Steven L. Johnson) — Debateca', u:'../Debateca 2026/Biblioteca de Documentos de Debate/Material de Debate/Libro_ Ganar debates.pdf' },
   casefileTemas: { t:'Temas para el casefile (Debateca)', u:'../Debateca 2026/Biblioteca de Documentos de Debate/Material de Debate/TEMAS PARA EL CASEFILE.pdf' },
   casefilePlantilla: { t:'Plantilla para casefile (Debateca)', u:'../Debateca 2026/Biblioteca de Documentos de Debate/Material de Debate/Plantilla para Casefile.pdf' },
   examen22: { t:'Examen de jueces CMUDE Madrid 2022 (con comentarios)', u:'../Debateca 2026/Biblioteca de Documentos de Debate/Examenes de Jueces/CMUDE Madrid 2022-5-31.pdf' },
   examen21: { t:'Examen de jueces CMUDE 2021', u:'../Debateca 2026/Biblioteca de Documentos de Debate/Examenes de Jueces/CMUDE 2021.pdf' },
   elpais: { t:'EL PAÍS', u:'https://elpais.com' },
-  casefileDoc: { t:'Mi casefile (Google Docs)', u:'https://docs.google.com/document/d/1hMi4EpFwtPCHV3W0fYPO-6s9hAdzNEtAJpK8PC2192Q/edit' },  // el documento donde Germán escribe las fichas
+  casefileDoc: jp ? { t:'Mis documentos de Google', u:'https://docs.google.com/document/' }
+                 : { t:'Mi casefile (Google Docs)', u:'https://docs.google.com/document/d/1hMi4EpFwtPCHV3W0fYPO-6s9hAdzNEtAJpK8PC2192Q/edit' },  // el documento donde Germán escribe las fichas
   bpringaos: { t:'Tu expediente en bpringaos', u:'https://yermandonka.github.io/bpringaos/stats.html?p=german' },
 };
 
@@ -241,7 +246,9 @@ const PSYCH = [
     pasos:[
       'Ve el taller (30 min). Apunta 3 ideas que te sirvan a ti, no en general.',
       'Escribe las 5 frases exactas que te dices cuando ves a alguien con reputación en tu sala ("este me va a destrozar", "a este no le gano la comparativa"...). Sin maquillar.',
-      'Para cada frase: ¿es un hecho o una predicción? ¿Qué evidencia tienes? Dato útil: en el XI BP UAM el top speaker sacó un 79 y un 80 en dos rondas; tú sacaste 75 en dos. La distancia real es menor que la que te cuentas.',
+      'Para cada frase: ¿es un hecho o una predicción? ¿Qué evidencia tienes? ' + (jp
+        ? 'Si tienes el tab, compara tus dos mejores rondas con las de quien lideró la tabla.'
+        : 'Dato útil: en el XI BP UAM el top speaker sacó un 79 y un 80 en dos rondas; tú sacaste 75 en dos. La distancia real es menor que la que te cuentas.'),
       'Reescribe cada frase como instrucción de proceso ("escucha su mecanismo y busca el eslabón débil"). Guarda estas 5 en la Tarjeta de sala (pestaña Psico).',
     ]},
   { id:'P2', titulo:'Rutina pre-ronda', pasos:[
@@ -251,7 +258,7 @@ const PSYCH = [
       'Regla: los objetivos de resultado (1º, 77) se miran después del torneo. Durante, sólo proceso.',
     ]},
   { id:'P3', titulo:'La reputación es una moción, no una persona', pasos:[
-      'Abre tu expediente en bpringaos y el tab del último torneo. Mira los speaks por ronda de 3 personas "con reputación": todas tienen rondas de 73–75. La reputación es una media, no un escudo.',
+      (jp ? 'Abre el tab de un torneo reciente.' : 'Abre tu expediente en bpringaos y el tab del último torneo.') + ' Mira los speaks por ronda de 3 personas "con reputación": todas tienen rondas de 73–75. La reputación es una media, no un escudo.',
       'Ejercicio "el rival es material": elige un discurso de un debatiente top en Debateca. Escúchalo SOLO como material: lista sus 3 afirmaciones principales y el eslabón más débil de cada una. Nada de adjetivos sobre la persona.',
       'Escribe una carta corta a tu yo de la próxima ronda difícil: qué quieres que recuerde en el minuto 1.',
     ]},
@@ -286,7 +293,7 @@ const PSYCH = [
       'Regla de F4: en cada adjudicación en la sombra, escribe una discrepancia potencial con el panel real antes de ver el resultado.',
     ]},
   { id:'P10', titulo:'Energía en torneos largos', pasos:[
-      'Mapa de energía de un torneo de 6 rondas + eliminatorias: dónde caes (habitualmente R4–R5 y la ronda tras una 4ª).',
+      'Mapa de energía de un torneo de 6 rondas + eliminatorias: dónde caes' + (jp ? '.' : ' (habitualmente R4–R5 y la ronda tras una 4ª).'),
       'Micro-rutinas de recuperación de 5 min entre rondas: comida real, agua, caminar fuera, nada de redes.',
       'Define la "ronda de reinicio": qué haces exactamente si llevas dos malas.',
     ]},
@@ -1186,7 +1193,13 @@ const WEEKS = [
 W(0, { theme:'Arranque: línea base', focus:'Saber exactamente de dónde sales antes de entrenar',
   custom:{
     wed:[
-      { type:'plan', title:'Lee tu diagnóstico (lo que de verdad te saca de quicio)', min:20, prio:1,
+      jp ? { type:'plan', title:'Haz tu diagnóstico de partida', min:20, prio:1,
+        desc:'Revisa un discurso propio con la tabla de oradoras y fija el punto de partida del plan.',
+        steps:['Escucha un discurso tuyo. Si necesitas uno, graba un discurso de 7 min con una moción de la biblioteca.',
+          'Revisa caracterización, mecanismo, ponderación, cierre, extensión y respuesta a POIs con la tabla del manual (Apéndice A).',
+          'Escribe las 3 reglas que más te ayudarían. Van a tu Tarjeta de sala.'],
+        links:[R.manual] }
+      : { type:'plan', title:'Lee tu diagnóstico (lo que de verdad te saca de quicio)', min:20, prio:1,
         desc:'El análisis de tus 11 discursos del UAM y del Elías Ahuja, cruzado con la tabla de oradoras del manual. Es la base de todo el plan.',
         steps:['Abre el análisis (enlace de abajo) y léelo entero (20 min).','Subraya las 3 reglas que más te duelan. Esas son las primeras que van a la Tarjeta de sala.'],
         links:[{t:'Análisis de tus discursos (versión bonita)', u:'../docs/ANALISIS_DISCURSOS.html'},{t:'ANALISIS_DISCURSOS.md (texto)', u:'../ANALISIS_DISCURSOS.md'}] },
@@ -1198,10 +1211,17 @@ W(0, { theme:'Arranque: línea base', focus:'Saber exactamente de dónde sales a
         steps:['Pestaña Psico → Tarjeta de sala.','Escribe: (1) tres reglas del diagnóstico, (2) una frase para cuando veas a alguien con reputación, (3) tu frase de cierre tipo: "Por tanto, [tesis], y por eso ganamos [métrica]".'] },
       { type:'casefile', title:'Abre tu casefile: primera ficha (RRII)', min:10, prio:2, topic:'rrii',
         desc:'El casefile tiene 27 temas, uno por semana, y lo escribes en tu Google Doc. Hoy sólo abres el de Relaciones Internacionales y escribes lo que ya sabes, sin buscar nada.',
-        steps:['Abre tu casefile (Google Docs) → Relaciones internacionales.','Escribe de memoria: 3 hechos, 2 actores, 1 moción. El lunes lo completas con EL PAÍS.','Pestaña Ajustes: si el URJC u otro torneo tiene ya fecha oficial, cámbiala.'] },
+        steps:['Abre tu casefile (Google Docs) → Relaciones internacionales.','Escribe de memoria: 3 hechos, 2 actores, 1 moción. El lunes lo completas con EL PAÍS.','Pestaña Ajustes: si el URJC u otro torneo tiene ya fecha oficial, cámbiala.'],
+        links:jp ? [R.casefileDoc] : [] },
     ],
     thu:[
-      { type:'drill', title:'Escucha tu 68 y tu 75', min:35, prio:1,
+      jp ? { type:'drill', title:'Compara dos discursos tuyos', min:35, prio:1,
+        desc:'Compara un discurso que te salió bien y otro que quieras mejorar con la tabla de oradoras. Si sólo tienes una grabación, repite ese discurso y compáralo con la primera versión.',
+        steps:['Escucha ambos discursos con el manual abierto por la tabla de oradoras (Apéndice A).',
+          'Cronometra la caracterización y cuenta las muletillas de 2 minutos en cada discurso.',
+          'Escribe 3 diferencias concretas y qué rango de la tabla le darías a cada uno.'],
+        links:[R.manual] }
+      : { type:'drill', title:'Escucha tu 68 y tu 75', min:35, prio:1,
         desc:'Tu peor y tu mejor discurso del UAM, con la tabla de oradoras delante. Nadie te va a explicar mejor que tú mismo qué separa un 68 de un 75.',
         steps:['Escucha audios/uam2026_01.m4a (R1, MO, 68) con el manual abierto por la tabla de oradoras (Apéndice A).','Cronometra la caracterización (cuándo empieza el primer argumento) y cuenta muletillas ("vale", "al final", "etcétera", "pues") en 2 minutos. Anota ambas cifras.','Haz lo mismo con uam2026_06.m4a (R5, LO, 75).','Escribe 3 diferencias concretas y qué rango de la tabla le darías a cada uno. Guárdalo en tu cuaderno.'],
         links:[{t:'Transcripción R1 (UAM)', u:'../transcripciones/uam2026_01.txt'},{t:'Transcripción R5 (UAM)', u:'../transcripciones/uam2026_06.txt'}] },
@@ -1210,13 +1230,13 @@ W(0, { theme:'Arranque: línea base', focus:'Saber exactamente de dónde sales a
         steps:['Lee los rangos 70–72, 73–75, 76–78 y 79–82 dos veces.','Escribe con tus palabras qué separa el 73–75 del 76–78.'] },
       { type:'estilo', title:'Tom Tucker I: línea base y pausa en silencio', min:25, prio:1,
         desc:'Programa antimuletillas de dos semanas (6 sesiones cortas). Tom Tucker presenta las noticias sin un solo "eeeh"; tú vas a hacer lo mismo con tus argumentos. Los tacos no cuentan: son tuyos.',
-        steps:['Línea base: escucha 3 minutos de uam2026_06 (R5 del UAM) y cuenta "eeeh", "vale", "al final", "pues", "etcétera", "entonces". Divide entre 3: ésa es tu cifra de salida (apúntala en la retro del viernes).','Técnica 1, pausa en silencio: discurso de 2 min sobre una moción de la lista. Cada vez que notes que viene un relleno, cierra la boca y cuenta "uno" en silencio. Grábalo.','Cuenta las muletillas del minuto 2. Repite con otra moción. Objetivo hoy: bajar un 30 % respecto a la línea base, aunque suene raro.'],
-        links:[{t:'Transcripción R5 (UAM)', u:'../transcripciones/uam2026_06.txt'}] },
+        steps:[(jp ? 'Línea base: escucha 3 minutos de una grabación propia' : 'Línea base: escucha 3 minutos de uam2026_06 (R5 del UAM)') + ' y cuenta "eeeh", "vale", "al final", "pues", "etcétera", "entonces". Divide entre 3: ésa es tu cifra de salida (apúntala en la retro del viernes).','Técnica 1, pausa en silencio: discurso de 2 min sobre una moción de la lista. Cada vez que notes que viene un relleno, cierra la boca y cuenta "uno" en silencio. Grábalo.','Cuenta las muletillas del minuto 2. Repite con otra moción. Objetivo hoy: bajar un 30 % respecto a la línea base, aunque suene raro.'],
+        links:jp ? [] : [{t:'Transcripción R5 (UAM)', u:'../transcripciones/uam2026_06.txt'}] },
     ],
     fri:[
       { type:'reto', title:'Reto cronometrado de línea base · La Almeja Borracha', min:45, prio:1, baseline:true,
         desc:'El primer reto: moción nueva, 15 de prep, 7 de discurso grabado, rúbrica. Con esto se mide todo lo que venga después.',
-        steps:['Rol: MO o MG (extensionista): tu rol más flojo según los datos.','15 min de prep con el cronómetro. Aplica ya la regla 2+1 y caracterización ≤ 60 s.','7 min de discurso grabado. Cierre preparado a las 6:15.','Rúbrica completa: estimación, caracterización en segundos, muletillas/min, comparativa, cierre.'] },
+        steps:[jp ? 'Rol: MO o MG (extensionista).' : 'Rol: MO o MG (extensionista): tu rol más flojo según los datos.','15 min de prep con el cronómetro. Aplica ya la regla 2+1 y caracterización ≤ 60 s.','7 min de discurso grabado. Cierre preparado a las 6:15.','Rúbrica completa: estimación, caracterización en segundos, muletillas/min, comparativa, cierre.'] },
       { type:'retro', title:'Retro de arranque', min:5, prio:2, desc:'Tres preguntas y a casa.', steps:['¿Qué regla del diagnóstico ya puedes aplicar sin pensar?','¿Cuál te va a costar más?','Cifra de muletillas/min de la línea base del jueves y de hoy.'] },
       { type:'estilo', title:'Tom Tucker II: frases cortas con punto final', min:15, prio:1,
         desc:'El "eeeh" vive en las frases que no saben dónde acaban. Hoy, frases de 12 palabras como máximo y entonación descendente al final.',
@@ -1229,7 +1249,7 @@ W(1, { theme:'Diagnóstico y estructura', focus:'Tesis en 20 segundos y mecanism
   doc:true,
   taller:{t:'¿Cómo mecanizar argumentación?', u:'https://www.youtube.com/watch?v=pzGS2Q7s5I8', b:'Rubén Sánchez'},
   wed:{kind:'rebuild', u:'https://www.youtube.com/watch?v=Ue-0dWwWwPk', m:'EC se opone a la predominancia de la cultura del éxito en el estudiantado universitario (RRH 2024, sala alta)', role:'PM (Primer Ministro)'},
-  drill:{t:'Mecaniza en 3 pasos (regla 2+1)', steps:['Elige 3 mociones de la lista de retos.','Para cada una escribe UN argumento así: afirmación (1 línea) → actor y por qué cambia su conducta → qué pasa con quien no cambia → impacto (quién, cuánto, por qué importa) → por qué es más probable que la alternativa.','Léelo en voz alta: si tarda más de 90 s, sobra; si tarda menos de 45 s, falta un eslabón.','Escucha tu R5 del UAM (uam2026_06, cinco puntos): elige los DOS que valían y tira el resto. Ese es el esqueleto 2+1 que vas a usar en el reto.','Guarda los 3 en tu cuaderno (foto o texto).']},
+  drill:{t:'Mecaniza en 3 pasos (regla 2+1)', steps:['Elige 3 mociones de la lista de retos.','Para cada una escribe UN argumento así: afirmación (1 línea) → actor y por qué cambia su conducta → qué pasa con quien no cambia → impacto (quién, cuánto, por qué importa) → por qué es más probable que la alternativa.','Léelo en voz alta: si tarda más de 90 s, sobra; si tarda menos de 45 s, falta un eslabón.',(jp ? 'Escucha un discurso propio y elige tus dos mejores puntos.' : 'Escucha tu R5 del UAM (uam2026_06, cinco puntos): elige los DOS que valían y tira el resto.') + ' Ese es el esqueleto 2+1 que vas a usar en el reto.','Guarda los 3 en tu cuaderno (foto o texto).']},
   fri:{kind:'psico', psico:'P1'},
   manual:{paginas:'1–10', tema:'Reglas centrales: formato, tiempos, estructura, antes del debate'},
   ganar:{cap:'Introducción y cap. 1 (Una filosofía del debate)'},

@@ -1,6 +1,12 @@
-# Quahog Debate Club · plan de entrenamiento de Germán
+# Quahog Debate Club · plan de entrenamiento BP
 
 App personal y offline para entrenar debate BP de noviembre de 2026 a junio de 2027.
+
+[Abrir el plan de Germán](https://yermandonka.github.io/bptraining/app/) · [Abrir el plan de JP](https://yermandonka.github.io/bptraining/app/?perfil=jp)
+
+Los dos perfiles comparten las 33 semanas de entrenamiento y el calendario inicial. Cada perfil guarda su progreso y sus ajustes en el navegador. JP puede vincular su Google Doc de casefile desde **Ajustes → Mi casefile**. Para abrir el perfil de JP desde una copia local, añade `?perfil=jp` a la URL de `app/index.html` o cambia de perfil desde **Ajustes → Datos**.
+
+El perfil de JP enlaza al manual oficial en línea. Para las lecturas en PDF de Debateca, coloca la carpeta `Debateca 2026` en la raíz de una copia local del repositorio y abre la app desde esa copia.
 
 ## Abrir la app
 

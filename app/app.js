@@ -3,6 +3,8 @@
 // ============================================================
 (function () {
   const E = window.ENGINE, D = window.PLAN_DATA, LIB = window.LIBRARY || { talleres: [], debates: [] };
+  const jp = D.CONFIG.perfil === 'jp';
+  document.title = `Quahog Debate Club · plan de ${D.CONFIG.nombre}`;
   let state = E.loadState();
   let plan = E.buildPlan(state);
   let view = { route: 'hoy', week: null, calMonth: null, q: '', libTab: 'talleres', filtro: '', quiz: null, open: {} };
@@ -116,7 +118,9 @@
   function taskCard(t, opts) {
     opts = opts || {};
     const done = !!state.done[t.id]; const open = view.open[t.id] || opts.open;
-    const links = (t.links || []).filter(l => l && l.u).map(l => l.u.startsWith('#') ? `<a class="lnk" href="${h(l.u)}">${h(l.t)} →</a>` : `<a class="lnk" href="${h(l.u)}" target="_blank" rel="noopener">${h(l.t)} ↗</a>`).join('');
+    const links = (t.links || []).map(l => jp && l === D.R.casefileDoc && state.casefileUrl
+      ? { t: 'Mi casefile (Google Docs)', u: casefileURL(state.casefileUrl) || l.u }
+      : l).filter(l => l && l.u).map(l => l.u.startsWith('#') ? `<a class="lnk" href="${h(l.u)}">${h(l.t)} →</a>` : `<a class="lnk" href="${h(l.u)}" target="_blank" rel="noopener">${h(l.t)} ↗</a>`).join('');
     const steps = (t.steps || []).length ? `<ol class="steps">${t.steps.map(s => `<li>${h(s)}</li>`).join('')}</ol>` : '';
     const info = t.info ? `<div class="dinfo">${h(t.info.to)} · ${h(t.info.r)} · ${h(t.info.te)}${t.type === 'judge' ? ` · <button class="btn tiny ghost" data-action="reveal" data-id="${h(t.id)}">Revelar resultado real</button><span id="rev-${h(t.id)}" class="hidden"> → <b>${h(t.info.res || 'no consta')}</b></span>` : ` · <span class="muted">${h(t.info.eq)}</span>`}</div>` : '';
     const extra = t.type === 'reto' ? retoWidget(t) : t.type === 'rebuild' ? `<div class="row"><button class="btn small" data-action="timer" data-min="${t.prep || 15}" data-label="Prep · ${h(t.role)}">⏱ Prep ${t.prep || 15}:00</button><button class="btn small" data-action="timer" data-min="7" data-label="Discurso">⏱ Discurso 7:00</button></div>` : t.type === 'judge' ? `<div class="row"><a class="btn small" href="#juez">Ir a la rúbrica de adjudicación →</a></div>` : t.type === 'psico' ? `<div class="row"><a class="btn small" href="#psico">Abrir Tarjeta de sala →</a></div>` : t.type === 'autopsia' ? `<div class="row"><a class="btn small" href="#progreso">Registrar torneo →</a></div>` : '';
@@ -188,7 +192,7 @@
         ${week.extras.length ? `<div class="card"><h3>Extras y recuperaciones de la semana</h3>${week.extras.map(x => taskCard(x)).join('')}</div>` : ''}`;
     }
     const weak = D.WEAKNESSES[((week.n - 1) % D.WEAKNESSES.length + D.WEAKNESSES.length) % D.WEAKNESSES.length];
-    const grind = `<div class="card grind"><h3>¿Sabéis lo que me saca de quicio?</h3><b>${h(weak.titulo)}</b><p class="muted">${h(weak.dato)}</p><p>${h(weak.plan)}</p></div>`;
+    const grind = `<div class="card grind"><h3>${jp ? 'Foco técnico' : '¿Sabéis lo que me saca de quicio?'}</h3><b>${h(weak.titulo)}</b>${jp ? '' : `<p class="muted">${h(weak.dato)}</p>`}<p>${h(weak.plan)}</p></div>`;
     return `<section class="hoy"><h1>${h(E.fmtLong(t))}</h1>${head}${body}${tHtml}${grind}</section>`;
   }
   function pendingOfWeek(week) {
@@ -273,7 +277,7 @@
     const phases = D.PHASES.map(p => { const ws = plan.weeks.filter(w => w.n >= p.semanas[0] && w.n <= p.semanas[1] && !w.light); const tot = ws.reduce((a, w) => a + E.weekProgress(w, state).core, 0); const dn = ws.reduce((a, w) => a + E.weekProgress(w, state).done, 0); return `<div class="prow"><span class="chip" style="--c:${p.color}">${h(p.nombre)}</span><div class="bar"><i style="width:${tot ? dn / tot * 100 : 0}%;background:${p.color}"></i></div><small>${dn}/${tot}</small></div>`; }).join('');
     return `<section class="prog">
       ${profileCard(st)}
-      <div class="card"><h3>Speaks por torneo</h3><p class="muted">Línea clara: tu media. Puntos grises: media del torneo. Línea punteada: objetivo 77. Base histórica ${D.CONFIG.baselineSpks}.</p>${chart}
+      <div class="card"><h3>Speaks por torneo</h3><p class="muted">Línea clara: tu media. Puntos grises: media del torneo. Línea punteada: objetivo 77.${jp ? '' : ` Base histórica ${D.CONFIG.baselineSpks}.`}</p>${chart}
         <details><summary>Registrar torneo (autopsia)</summary>
         <form data-action="torneo-save" class="form">
           <label>Nombre<input name="nombre" required maxlength="80"></label>
@@ -316,7 +320,7 @@
     const qh = state.quiz.history || [];
     const qz = `<p>${D.QUIZ.length} preguntas de nivel examen real (CMUDE 2021/2022, CED VI): mini-casos por moción y selección múltiple que solo puntúa si aciertas el conjunto exacto. 15 por intento, preguntas y opciones barajadas. Mejor resultado: <b>${state.quiz.best || 0}%</b> en ${state.quiz.attempts || 0} intentos. Aprobado: 80 %.</p>${qh.length ? `<p class="muted">Últimas notas: ${qh.slice(-6).map(x => `${h(E.fmtShort(x.fecha))} <b>${x.score}%</b>`).join(' · ')} · <a href="#progreso">curva en Progreso</a></p>` : ''}<button class="btn" data-action="quiz-start">Empezar examen</button>`;
     return `<section class="juez">
-      <div class="card"><h2>De trainee a principal</h2><p class="muted">Tu historial: 22 rondas juzgadas, 18 como trainee, 4 como panel, 0 como principal. El salto se da en la deliberación, no en la sala.</p><div class="roadmap">${roadmap}</div></div>
+      <div class="card"><h2>De trainee a principal</h2><p class="muted">${jp ? 'Practica el razonamiento en voz alta y el feedback específico.' : 'Tu historial: 22 rondas juzgadas, 18 como trainee, 4 como panel, 0 como principal. El salto se da en la deliberación, no en la sala.'}</p><div class="roadmap">${roadmap}</div></div>
       <div class="card"><h3>Examen de juez</h3>${qz}</div>
       <div class="card"><h3>Talleres de adjudicación (Debateca)</h3><div class="liblist">${judgeTalleres.slice(0, 60).map(t => `<a class="libitem" href="${h(t.u)}" target="_blank" rel="noopener"><small>${h(t.c)}</small><b>${h(t.t)}</b><span>${h(t.b)}</span></a>`).join('')}</div><p class="muted">Manual: secciones 3.1–3.5 y apéndices A–B. Exámenes reales en Debateca: <a href="${h(D.R.examen22.u)}" target="_blank" rel="noopener">CMUDE Madrid 2022</a> · <a href="${h(D.R.examen21.u)}" target="_blank" rel="noopener">CMUDE 2021</a>.</p></div>
     </section>`;
@@ -359,7 +363,7 @@
     const sessions = D.PSYCH.map(p => { const t = Object.values(plan.index).find(x => x.psico === p.id); const done = t && state.done[t.id]; return `<div class="psess ${done ? 'done' : ''}"><b>${p.id} · ${h(p.titulo)}</b><small>${t ? 'S' + t.week + ' · ' + h(E.fmtShort(t.date)) : 'sin fecha'}${done ? ' · hecha' : ''}</small>${p.video ? `<a href="${h(p.video.u)}" target="_blank" rel="noopener">${h(p.video.t)} ↗</a>` : ''}<ol>${p.pasos.map(s => `<li>${h(s)}</li>`).join('')}</ol></div>`; }).join('');
     const pens = (state.logs.pensamientos || []).slice().reverse().map(p => `<li><span class="neg">"${h(p.pensamiento)}"</span><br><span class="pos">→ "${h(p.reformulacion)}"</span> <small>${h(p.fecha)}</small> <button class="btn tiny ghost" data-action="del" data-list="pensamientos" data-id="${h(p.id)}">borrar</button></li>`).join('');
     return `<section class="psico">
-      <div class="card"><h2>La cabeza</h2><p class="muted">Dato: online debates a 75,7 de media; presencial a 72,1. Mismo cerebro, distinta sala. Esta pestaña existe para cerrar esos 3,6 puntos.</p></div>
+      <div class="card"><h2>La cabeza</h2><p class="muted">${jp ? 'Entrena la rutina de sala y registra cómo respondes a la presión en los torneos.' : 'Dato: online debates a 75,7 de media; presencial a 72,1. Mismo cerebro, distinta sala. Esta pestaña existe para cerrar esos 3,6 puntos.'}</p></div>
       <div class="card"><h3>Tarjeta de sala</h3><p class="muted">Lo que lees antes de entrar: frases de proceso, rutina, métricas favoritas, checklist de prep. Se guarda sola.</p><textarea id="tarjeta" class="tarjeta" rows="10" placeholder="Ej.:\n— Rutina: 4-7-8 ×4, pies en el suelo, palabra: «eslabón».\n— Proceso: mecanismo de 3 eslabones · comparativa antes del 5:00 · 2 POIs.\n— Si veo a alguien con reputación: es material, no persona. Busco su eslabón débil.\n— Métricas: probabilidad y reversibilidad.">${h(state.tarjeta || '')}</textarea></div>
       <div class="card"><h3>Registro de diálogo interno</h3><p class="muted">Cuando aparezca la frase, apúntala tal cual y reescríbela como instrucción de proceso. Con 10 entradas verás el patrón.</p>
         <form class="form inline" data-action="pens-save"><label>Lo que me dije<input name="pensamiento" required maxlength="200" placeholder="«este me va a destrozar»"></label><label>Reformulación de proceso<input name="reformulacion" required maxlength="200" placeholder="«escucho su mecanismo y busco el eslabón débil»"></label><button class="btn small" type="submit">Guardar (+3 XP)</button></form>
@@ -388,16 +392,24 @@
   }
 
   // ---------- AJUSTES ----------
+  function casefileURL(value) {
+    const match = /^https:\/\/docs\.google\.com\/document\/d\/([\w-]+)(?:[/?#]|$)/.exec(value);
+    return match ? `https://docs.google.com/document/d/${match[1]}/edit` : '';
+  }
   function viewAjustes() {
     const rows = plan.tournaments.map(t => `<tr><td><input data-action="t-edit" data-id="${h(t.id)}" data-k="nombre" value="${h(t.nombre)}" maxlength="80"></td><td><input type="date" data-action="t-edit" data-id="${h(t.id)}" data-k="inicio" value="${h(t.inicio)}"></td><td><input type="date" data-action="t-edit" data-id="${h(t.id)}" data-k="fin" value="${h(t.fin)}"></td><td><select data-action="t-edit" data-id="${h(t.id)}" data-k="rol">${['debatiente', 'juez', 'ver', 'organizo'].map(r => `<option ${t.rol === r ? 'selected' : ''}>${r}</option>`).join('')}</select></td><td><button class="btn tiny ghost danger" data-action="t-del" data-id="${h(t.id)}">✕</button></td></tr>`).join('');
+    const casefile = jp ? `<div class="card"><h3>Mi casefile</h3>
+      <p>Crea un documento en <a href="https://docs.new/" target="_blank" rel="noopener">Google Docs</a> y guarda aquí su enlace para abrirlo desde tus tareas.</p>
+      <form class="form inline" data-action="casefile-save"><label>Enlace de Google Docs<input name="url" type="url" value="${h(state.casefileUrl)}"></label><button class="btn small" type="submit">Guardar enlace</button></form></div>` : '';
     return `<section class="ajustes">
       <div class="card"><h2>Torneos</h2><p class="muted">Las fechas 2027 son estimadas por el patrón de 2025/2026. Cámbialas cuando salgan las convocatorias: el plan (semanas pre-torneo y autopsias) se recoloca solo donde esté enlazado por id; los nuevos aparecen en el calendario y en "próximo torneo".</p>
         <table class="ttable"><thead><tr><th>Nombre</th><th>Inicio</th><th>Fin</th><th>Rol</th><th></th></tr></thead><tbody>${rows}</tbody></table>
         <form class="form inline" data-action="t-add"><label>Nuevo torneo<input name="nombre" required maxlength="80"></label><label>Inicio<input name="inicio" type="date" required></label><label>Fin<input name="fin" type="date" required></label><label>Rol<select name="rol"><option>debatiente</option><option>juez</option><option>ver</option></select></label><button class="btn small" type="submit">Añadir</button></form></div>
-      <div class="card"><h3>Datos</h3><p>Todo se guarda en este navegador (sin cuentas ni servidores). Exporta de vez en cuando: es tu copia de seguridad y lo que le mandas a Claude.</p>
+      ${casefile}
+      <div class="card"><h3>Datos</h3><p>Perfil de ${h(D.CONFIG.nombre)} · <a href="${jp ? 'index.html#ajustes' : 'index.html?perfil=jp#ajustes'}">Abrir el perfil de ${jp ? 'Germán' : 'JP'}</a></p><p>Todo se guarda en este navegador (sin cuentas ni servidores). Exporta de vez en cuando: es tu copia de seguridad y lo que le mandas a Claude.</p>
         <div class="row wrap"><button class="btn" data-action="export">Exportar progreso (JSON)</button><label class="btn ghost">Importar JSON<input type="file" accept="application/json" data-action="import" hidden></label><button class="btn ghost" data-action="copy-summary">Copiar resumen de texto</button><button class="btn danger ghost" data-action="reset">Borrar todo</button></div>
         <p class="muted">Semanas avisadas: ${(state.lostWeeks || []).length ? state.lostWeeks.join(', ') : 'ninguna'}. Estado creado el ${h(state.created || '?')}.</p></div>
-      <div class="card"><h3>Cómo se diseñó esto</h3><p>Plan de 33 semanas (9 nov 2026 → 25 jun 2027) construido a partir de: tus 11 discursos del XI BP UAM y del Elías Ahuja 2026, tus 63 rondas en bpringaos, el Manual CMUDE 2026 y la Debateca 2026. Estrategia copiada de quienes mejoran de verdad: reconstruir discursos de salas altas antes de verlos, adjudicar debates reales y compararse con el panel, repetir los propios discursos tras el feedback, leer el manual entero, drills cortos grabados y una hora de cabeza cada dos semanas.</p><p class="muted">Documentos: <a href="../docs/ANALISIS_DISCURSOS.html" target="_blank" rel="noopener">Análisis de tus discursos</a> · <a href="../docs/README.html" target="_blank" rel="noopener">Manual de uso</a> · <a href="../docs/HANDOFF.html" target="_blank" rel="noopener">Estado del proyecto (para Claude)</a>. Archivos: <code>app/data.js</code> (plan editable), <code>app/library.js</code> (Debateca).</p></div>
+      ${jp ? `<div class="card"><h3>Recursos del plan</h3><p>33 semanas de entrenamiento BP hacia el CMUDE 2027. Para los PDF de Debateca, abre la app desde una copia del repositorio con la carpeta <code>Debateca 2026</code> en la raíz.</p><p><a href="${h(D.R.manual.u)}" target="_blank" rel="noopener">Manual CMUDE 2026</a></p></div>` : `<div class="card"><h3>Cómo se diseñó esto</h3><p>Plan de 33 semanas (9 nov 2026 → 25 jun 2027) construido a partir de: tus 11 discursos del XI BP UAM y del Elías Ahuja 2026, tus 63 rondas en bpringaos, el Manual CMUDE 2026 y la Debateca 2026. Estrategia copiada de quienes mejoran de verdad: reconstruir discursos de salas altas antes de verlos, adjudicar debates reales y compararse con el panel, repetir los propios discursos tras el feedback, leer el manual entero, drills cortos grabados y una hora de cabeza cada dos semanas.</p><p class="muted">Documentos: <a href="../docs/ANALISIS_DISCURSOS.html" target="_blank" rel="noopener">Análisis de tus discursos</a> · <a href="../docs/README.html" target="_blank" rel="noopener">Manual de uso</a> · <a href="../docs/HANDOFF.html" target="_blank" rel="noopener">Estado del proyecto (para Claude)</a>. Archivos: <code>app/data.js</code> (plan editable), <code>app/library.js</code> (Debateca).</p></div>`}
     </section>`;
   }
 
@@ -417,7 +429,7 @@
     if (a === 'reto-random') { const d = rnd(LIB.debates.filter(x => x.m)); const t = plan.index[el.dataset.id]; if (t && d) { t.motion = d.m; t.steps[0] = `Moción: ${d.m} (${d.to}, ${d.r}). Después, búscala en Biblioteca para ver la sala.`; render(); toast('Nueva moción cargada'); } return; }
     if (a === 'export') return exportJSON();
     if (a === 'copy-summary') { const txt = E.summaryText(plan, state); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Resumen copiado'), () => { const p = $('#summary'); if (p) { const r = document.createRange(); r.selectNodeContents(p); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } toast('Selecciona y copia el texto del resumen'); }); return; }
-    if (a === 'reset') { if (confirm('¿Borrar TODO el progreso de este navegador? Exporta antes si quieres conservarlo.')) { state = E.defaultState(); persist(); rebuild(); render(); toast('Todo borrado. Hola, Meg.'); } return; }
+    if (a === 'reset') { if (confirm(`¿Borrar todo el progreso de ${D.CONFIG.nombre} en este navegador? Exporta antes si quieres conservarlo.`)) { state = E.defaultState(); persist(); rebuild(); render(); toast('Todo borrado. Hola, Meg.'); } return; }
     if (a === 'del') { const l = el.dataset.list; state.logs[l] = (state.logs[l] || []).filter(x => x.id !== el.dataset.id); persist(); render(); return; }
     if (a === 'quiz-start') {
       const pick = D.QUIZ.slice().sort(() => Math.random() - 0.5).slice(0, 15);
@@ -445,7 +457,27 @@
     }
     if (a === 'lib-filter') { view.filtro = el.value; render(); return; }
     if (a === 't-edit') { const id = el.dataset.id, k = el.dataset.k; state.tournaments[id] = Object.assign(state.tournaments[id] || {}, { [k]: el.value, estimado: false }); persist(); rebuild(); if (k !== 'nombre') render(); return; }
-    if (a === 'import') { const f = el.files && el.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { try { const obj = JSON.parse(rd.result); if (!obj || typeof obj !== 'object' || !obj.done) throw new Error('formato'); state = E.migrate(obj); persist(); rebuild(); render(); toast('Progreso importado', 'ok'); } catch (e) { toast('Ese archivo no es un progreso válido', 'warn'); } }; rd.readAsText(f); return; }
+    if (a === 'import') {
+      const file = el.files && el.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          const progress = data?.app === 'QDC' ? data.state : data;
+          if (!progress?.done || typeof progress.done !== 'object') throw new Error('formato');
+          if ((data.perfil || 'german') !== D.CONFIG.perfil) {
+            el.value = '';
+            return toast('Ese archivo pertenece a otro perfil.', 'warn');
+          }
+          state = E.migrate(progress);
+          persist(); rebuild(); render(); toast('Progreso importado', 'ok');
+        } catch (e) {
+          el.value = '';
+          toast('Ese archivo no es un progreso válido', 'warn');
+        }
+      };
+      reader.readAsText(file);
+    }
   });
   document.addEventListener('input', ev => {
     const el = ev.target;
@@ -455,6 +487,13 @@
   document.addEventListener('submit', ev => {
     const f = ev.target.closest('form[data-action]'); if (!f) return; ev.preventDefault();
     const a = f.dataset.action; const fd = new FormData(f); const g = k => String(fd.get(k) || '').trim();
+    if (a === 'casefile-save' && jp) {
+      const value = g('url');
+      const url = casefileURL(value);
+      if (value && !url) return toast('Introduce un enlace a un documento de Google Docs.', 'warn');
+      state.casefileUrl = url;
+      persist(); render(); toast('Enlace guardado', 'ok'); return;
+    }
     if (a === 'reto-save') {
       const t = plan.index[f.dataset.id]; const vals = [0, 1, 2, 3].map(i => Number(fd.get('r' + i) || 2)); const est = Math.round((70 + (E.avg(vals) - 1) * 3) * 10) / 10;
       state.logs.retos.push({ id: uid(), taskId: f.dataset.id, fecha: today(), motion: t ? t.motion : '', est, vals, carac: g('carac'), mulet: g('mulet'), comp: g('comp') === '1', cierre: g('cierre') === '1', notas: g('notas') }); if (t) state.done[t.id] = today(); persist(); render(); toast(`Reto guardado · estimación ${est}. ${rnd(D.QUIPS.done)}`, 'ok'); return;
@@ -467,8 +506,8 @@
     if (a === 't-add') { const id = 't' + uid(); state.tournaments[id] = { nombre: g('nombre'), inicio: g('inicio'), fin: g('fin') || g('inicio'), rol: g('rol'), lugar: '', estimado: false }; persist(); rebuild(); render(); toast('Torneo añadido', 'ok'); return; }
   });
   function exportJSON() {
-    const blob = new Blob([JSON.stringify({ exportado: today(), app: 'QDC', state }, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `qdc-progreso-${today()}.json`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); toast('Exportado. Mándaselo a Claude cuando toque.', 'ok');
+    const blob = new Blob([JSON.stringify({ exportado: today(), app: 'QDC', perfil: D.CONFIG.perfil, state }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `qdc-progreso-${jp ? 'jp-' : ''}${today()}.json`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); toast('Exportado. Mándaselo a Claude cuando toque.', 'ok');
   }
   document.addEventListener('keydown', ev => {
     const q = view.quiz; if (!q || view.route !== 'juez' || ev.metaKey || ev.ctrlKey || ev.altKey) return;

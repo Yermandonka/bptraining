@@ -2,6 +2,7 @@
 //   node tools/e2e.mjs            (usa playwright de ~/Projects/bichimeca/node_modules si no está instalado aquí)
 // Cada línea PASS/FAIL es una comprobación; al final imprime los errores de consola.
 import { createRequire } from 'node:module';
+import { isDeepStrictEqual } from 'node:util';
 const require = createRequire(import.meta.url);
 let chromium;
 try { ({ chromium } = require('playwright')); } catch (e) { ({ chromium } = require('/home/yermandonka/Projects/bichimeca/node_modules/playwright')); }
@@ -80,6 +81,47 @@ const txt = async (p, sel) => (await p.textContent(sel)) || '';
   await p.goto(U('2026-11-16', 'hoy')); await p.waitForSelector('.task'); ok(/Mi casefile \(Google Docs\)/.test(await txt(p, '.tasks')) && /Documental/.test(await txt(p, '.tasks')), 'lunes S2: documental y enlace al Google Doc');
   await p.goto(U('2026-11-09', 'hoy')); await p.waitForSelector('.task'); ok(/ficha de casefile: Economía/.test(await txt(p, '.tasks')), 'lunes S1 enlaza tema');
   await p.goto(U('2027-02-04', 'hoy')); await p.waitForSelector('.task'); ok(/Ficha exprés/.test(await txt(p, '.tasks')), 'jueves S13 ficha exprés');
+  await p.context().close();
+}
+{ // perfiles: mismo plan, progreso independiente y copia de seguridad
+  const p = await fresh();
+  const german = U('2026-11-16', 'hoy');
+  const jp = german.replace('?today=', '?perfil=jp&today=');
+  const schedule = () => p.evaluate(() => {
+    const { index, tournaments } = window.ENGINE.buildPlan(window.ENGINE.defaultState());
+    const tasks = Object.values(index).map(({ id, week, day, date, type, min, prio, xp, motion }) =>
+      ({ id, week, day, date, type, min, prio, xp, motion }));
+    return { tasks, tournaments };
+  });
+  await p.goto(german);
+  const original = await schedule();
+  await p.locator('.tasks .chk').first().click();
+  await p.goto(jp);
+  ok(await p.locator('.pname b').textContent() === 'JP' && /plan de JP/.test(await p.title()), 'el enlace abre el perfil de JP');
+  ok(isDeepStrictEqual(original, await schedule()), 'calendario, torneos, tareas, tiempos y XP idénticos');
+  ok(await p.locator('.task.done').count() === 0, 'JP empieza sin tareas de Germán marcadas');
+  await p.locator('.tasks .chk').last().click();
+  await p.goto(german);
+  ok(await p.locator('.tasks .task.done').count() === 1, 'el progreso original sigue guardado');
+  await p.goto(jp.replace('#hoy', '#progreso'));
+  ok(/Sin datos/.test(await txt(p, '.prog')) && !/Aquinas-Roncalli/.test(await txt(p, '.prog')), 'JP empieza sin historial de torneos de Germán');
+  await p.goto(jp.replace('#hoy', '#ajustes'));
+  await p.getByLabel('Enlace de Google Docs').fill('https://docs.google.com/document/d/casefile-jp/edit?usp=sharing');
+  await p.getByRole('button', { name: 'Guardar enlace' }).click();
+  const [backup] = await Promise.all([p.waitForEvent('download'), p.click('[data-action=export]')]);
+  ok(/qdc-progreso-jp/.test(backup.suggestedFilename()), 'la copia de JP se identifica por perfil');
+  const backupPath = await backup.path();
+  await p.click('[data-action=reset]');
+  await p.locator('[data-action=import]').setInputFiles(backupPath);
+  await p.getByText('Progreso importado', { exact: true }).waitFor({ state: 'visible' });
+  await p.goto(jp);
+  ok(await p.locator('.tasks .task.done').count() === 1, 'JP recupera las tareas al importar su copia');
+  ok(await p.locator('.tasks a[href="https://docs.google.com/document/d/casefile-jp/edit"]').count() > 0, 'sus tareas enlazan a su casefile después de importar');
+  await p.goto(german.replace('#hoy', '#ajustes'));
+  await p.locator('[data-action=import]').setInputFiles(backupPath);
+  await p.getByText('Ese archivo pertenece a otro perfil.', { exact: true }).waitFor({ state: 'visible' });
+  await p.goto(german);
+  ok(await p.locator('.tasks .task.done').count() === 1, 'la copia de JP no sobrescribe el progreso de Germán');
   await p.context().close();
 }
 await browser.close();

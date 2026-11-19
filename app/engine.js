@@ -260,7 +260,7 @@
   }
 
   // ---------- estado ----------
-  const STORAGE_KEY = 'qdc-state-v1';
+  const STORAGE_KEY = D.CONFIG.perfil === 'jp' ? 'qdc-state-jp-v1' : 'qdc-state-v1';
   function defaultState() {
     return { v: 1, done: {}, lostWeeks: [], tournaments: {}, logs: { retos: [], juez: [], torneos: [], pensamientos: [], juezTorneos: [] }, tarjeta: '', casefile: {}, casefileDoc: {}, quiz: { best: 0, attempts: 0, history: [] }, badges: {}, seenDebates: [], created: todayISO() };
   }
