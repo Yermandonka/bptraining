@@ -165,6 +165,7 @@
   function viewHoy(st) {
     const t = today(); const n = E.weekNumberFor(t); const week = plan.weeks.find(w => w.n === n);
     const dowi = E.dow(t); const dayKey = E.DAYS[dowi];
+    const single = E.singleSession(t);
     const nt = nextTournaments(2);
     const tHtml = nt.length ? `<div class="card tourn"><h3>Próximo torneo</h3>${nt.map(x => `<div class="trow"><b>${h(x.nombre)}</b><span>${h(E.fmtShort(x.inicio))}–${h(E.fmtShort(x.fin))} · ${h(x.lugar)} · ${h(x.rol)}${x.estimado ? ' · <i>fecha estimada</i>' : ''}</span><span class="cd">${daysUntil(x.inicio) <= 0 ? '¡en curso!' : 'en ' + daysUntil(x.inicio) + ' días'}</span></div>`).join('')}</div>` : '';
     let body = '';
@@ -181,15 +182,15 @@
     </div>`;
     if (week.lost) body = `<div class="card"><h3>Semana avisada</h3><p>${h(rnd(D.QUIPS.lost))}</p><p>Lo importante se ha repartido en las semanas siguientes. <a href="#semana">Ver semana</a> · <button class="btn small ghost" data-action="unlose" data-n="${week.n}">Deshacer aviso</button></p></div>`;
     else if (dowi >= 5) {
-      const pend = pendingOfWeek(week);
+      const pend = single ? [] : pendingOfWeek(week);
       body = `<div class="card"><h3>Fin de semana</h3><p>${h(rnd(D.QUIPS.empty))}</p>${week.tourn.length ? `<p>Tienes torneo: <b>${h(week.tourn.map(x => x.nombre).join(', '))}</b>. Graba todos tus discursos y haz la rutina de la Tarjeta de sala.</p>` : ''}
-        ${pend.length ? `<h4>Pendientes de la semana (por si te apetece)</h4>${pend.map(x => taskCard(x, { date: true })).join('')}` : '<p class="muted">Nada pendiente de esta semana. Peter estaría orgulloso.</p>'}</div>`;
+        ${single ? '' : pend.length ? `<h4>Pendientes de la semana (por si te apetece)</h4>${pend.map(x => taskCard(x, { date: true })).join('')}` : '<p class="muted">Nada pendiente de esta semana. Peter estaría orgulloso.</p>'}</div>`;
     } else {
       const tasks = week.days[dayKey] || [];
-      const pend = pendingOfWeek(week).filter(x => x.date < t);
+      const pend = single ? [] : pendingOfWeek(week).filter(x => x.date < t);
       body = `<div class="card tasks"><h3>${E.DAY_ES[dayKey]} · ${tasks.reduce((a, x) => a + x.min, 0)} min</h3>${tasks.length ? tasks.map(x => taskCard(x)).join('') : `<p>${h(rnd(D.QUIPS.empty))}</p>`}</div>
         ${pend.length ? `<div class="card"><h3>Pendiente de días anteriores</h3>${pend.map(x => taskCard(x, { date: true })).join('')}</div>` : ''}
-        ${week.extras.length ? `<div class="card"><h3>Extras y recuperaciones de la semana</h3>${week.extras.map(x => taskCard(x)).join('')}</div>` : ''}`;
+        ${!single && week.extras.length ? `<div class="card"><h3>Extras y recuperaciones de la semana</h3>${week.extras.map(x => taskCard(x)).join('')}</div>` : ''}`;
     }
     const weak = D.WEAKNESSES[((week.n - 1) % D.WEAKNESSES.length + D.WEAKNESSES.length) % D.WEAKNESSES.length];
     const grind = `<div class="card grind"><h3>${jp ? 'Foco técnico' : '¿Sabéis lo que me saca de quicio?'}</h3><b>${h(weak.titulo)}</b>${jp ? '' : `<p class="muted">${h(weak.dato)}</p>`}<p>${h(weak.plan)}</p></div>`;
@@ -222,7 +223,7 @@
     const months = []; let m = E.parse(D.CONFIG.inicio); m = new Date(m.getFullYear(), m.getMonth(), 1);
     const end = E.parse(D.CONFIG.fin);
     while (m <= end) { months.push(new Date(m)); m = new Date(m.getFullYear(), m.getMonth() + 1, 1); }
-    const byDate = {}; Object.values(plan.index).forEach(x => { if (x.date) (byDate[x.date] = byDate[x.date] || []).push(x); });
+    const byDate = {}; Object.values(plan.index).forEach(x => { if (x.day) (byDate[x.date] = byDate[x.date] || []).push(x); });
     const t = today();
     const grid = months.map(mo => {
       const first = new Date(mo.getFullYear(), mo.getMonth(), 1); const off = (first.getDay() + 6) % 7; const dim = new Date(mo.getFullYear(), mo.getMonth() + 1, 0).getDate();

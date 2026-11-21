@@ -4,7 +4,9 @@ App personal y offline para entrenar debate BP de noviembre de 2026 a junio de 2
 
 [Abrir el plan de Germán](https://yermandonka.github.io/bptraining/app/) · [Abrir el plan de JP](https://yermandonka.github.io/bptraining/app/?perfil=jp)
 
-Los dos perfiles comparten las 33 semanas de entrenamiento y el calendario inicial. Cada perfil guarda su progreso y sus ajustes en el navegador. JP puede vincular su Google Doc de casefile desde **Ajustes → Mi casefile**. Para abrir el perfil de JP desde una copia local, añade `?perfil=jp` a la URL de `app/index.html` o cambia de perfil desde **Ajustes → Datos**.
+Los dos perfiles siguen las mismas fases y el mismo calendario inicial de torneos. Cada perfil guarda su progreso y sus ajustes en el navegador. JP puede vincular su Google Doc de casefile desde **Ajustes → Mi casefile**. Para abrir el perfil de JP desde una copia local, añade `?perfil=jp` a la URL de `app/index.html` o cambia de perfil desde **Ajustes → Datos**.
+
+Desde el 21 de noviembre de 2026, el perfil de Germán propone una sesión de 45 minutos por día de entrenamiento. El lunes se dedica a leer EL PAÍS. Los descansos siguen en el calendario y el material complementario está disponible en **Semana**.
 
 El perfil de JP enlaza al manual oficial en línea. Para las lecturas en PDF de Debateca, coloca la carpeta `Debateca 2026` en la raíz de una copia local del repositorio y abre la app desde esa copia.
 
@@ -19,7 +21,7 @@ El perfil de JP enlaza al manual oficial en línea. Para las lecturas en PDF de 
 - **Hoy**: tareas del día con checks, cronómetros de prep (15') y discurso (7'), rúbrica del reto de los viernes, pendientes de la semana, próximo torneo y el punto débil en el que estás.
 - **Semana**: los cinco días, el foco de la semana y el botón **"Esta semana no puedo"** (reparte lo importante en las tres semanas siguientes; se puede deshacer).
 - **Calendario**: noviembre → junio, por fases, con torneos.
-- **Casefile** (sin pestaña propia): lo escribes en tu Google Doc, enlazado desde las tareas. El lunes: 15 min de EL PAÍS, un vídeo explicativo de YouTube (estilo Memorias de Pez: el mecanismo de un problema o caso concreto) sobre un subtema de «Temas para el casefile» de Debateca y la ficha; el jueves (desde la semana 13), pasada exprés de mociones y actores. Cada tema cuenta como ficha (20 XP, dos logros) al marcar su tarea.
+- **Casefile** (sin pestaña propia) enlaza al Google Doc desde las tareas. Germán apunta los hallazgos de la lectura del lunes en la ficha durante los últimos cinco minutos. En el plan de JP, la sesión del lunes combina EL PAÍS, un vídeo explicativo y la ficha. Cada tema cuenta como ficha (20 XP, dos logros) al marcar su tarea.
 - **Progreso**: XP, nivel, racha, logros, gráfico de speaks por torneo (histórico de bpringaos + los que registres), registro de torneos (autopsia) y el **resumen para Claude**.
 - **Juez**: hoja de ruta trainee → panel → principal, examen de nivel examen real (86 preguntas tipo CMUDE 2021/2022 y CED VI: mini-casos y selección múltiple, 15 por intento, a pantalla completa, con historial de notas en Progreso) y talleres de adjudicación.
 - **Psico**: Tarjeta de sala (se guarda sola), registro de diálogo interno y las 13 sesiones.

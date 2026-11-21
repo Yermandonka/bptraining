@@ -80,7 +80,16 @@ const txt = async (p, sel) => (await p.textContent(sel)) || '';
   await p.goto(U('2026-11-11', 'casefile')); await p.waitForSelector('.task'); ok(true, '#casefile antiguo cae en Hoy');
   await p.goto(U('2026-11-16', 'hoy')); await p.waitForSelector('.task'); ok(/Mi casefile \(Google Docs\)/.test(await txt(p, '.tasks')) && /Documental/.test(await txt(p, '.tasks')), 'lunes S2: documental y enlace al Google Doc');
   await p.goto(U('2026-11-09', 'hoy')); await p.waitForSelector('.task'); ok(/ficha de casefile: Economía/.test(await txt(p, '.tasks')), 'lunes S1 enlaza tema');
-  await p.goto(U('2027-02-04', 'hoy')); await p.waitForSelector('.task'); ok(/Ficha exprés/.test(await txt(p, '.tasks')), 'jueves S13 ficha exprés');
+  await p.goto(U('2026-11-23', 'hoy')); await p.waitForSelector('.task');
+  ok(await p.locator('.hoy .task').count() === 1 && /Lunes · 45 min/.test(await txt(p, '.tasks h3')) && /Lectura de EL PAÍS/.test(await txt(p, '.tasks')), 'lunes S3: una lectura de 45 minutos');
+  await p.goto(U('2026-12-01', 'hoy')); await p.waitForSelector('.task');
+  ok(await p.locator('.hoy .task').count() === 1 && /Martes · 45 min/.test(await txt(p, '.tasks h3')) && /Reto cronometrado de línea base/.test(await txt(p, '.tasks')), 'el reto recolocado ocupa la sesión del martes');
+  await p.goto(U('2027-02-04', 'hoy')); await p.waitForSelector('.task');
+  ok(await p.locator('.hoy .task').count() === 1 && /Jueves · 45 min/.test(await txt(p, '.tasks h3')) && /Checklist de prep/.test(await txt(p, '.tasks')), 'jueves S13: solo el drill en Hoy');
+  await p.goto(U('2027-02-04', 'semana')); await p.waitForSelector('.days');
+  ok(/Ficha exprés/.test(await txt(p, '.semana')) && !/Ficha exprés/.test(await txt(p, '.days')), 'jueves S13: ficha exprés disponible como extra');
+  await p.goto(U('2026-11-23', 'hoy').replace('?today=', '?perfil=jp&today=')); await p.waitForSelector('.task');
+  ok(await p.locator('.tasks .task').count() > 1 && /Documental/.test(await txt(p, '.tasks')), 'JP conserva su plan del lunes');
   await p.context().close();
 }
 { // perfiles: mismo plan, progreso independiente y copia de seguridad
@@ -89,7 +98,7 @@ const txt = async (p, sel) => (await p.textContent(sel)) || '';
   const jp = german.replace('?today=', '?perfil=jp&today=');
   const schedule = () => p.evaluate(() => {
     const { index, tournaments } = window.ENGINE.buildPlan(window.ENGINE.defaultState());
-    const tasks = Object.values(index).map(({ id, week, day, date, type, min, prio, xp, motion }) =>
+    const tasks = Object.values(index).filter(t => t.date && t.date < '2026-11-21').map(({ id, week, day, date, type, min, prio, xp, motion }) =>
       ({ id, week, day, date, type, min, prio, xp, motion }));
     return { tasks, tournaments };
   });
@@ -98,7 +107,7 @@ const txt = async (p, sel) => (await p.textContent(sel)) || '';
   await p.locator('.tasks .chk').first().click();
   await p.goto(jp);
   ok(await p.locator('.pname b').textContent() === 'JP' && /plan de JP/.test(await p.title()), 'el enlace abre el perfil de JP');
-  ok(isDeepStrictEqual(original, await schedule()), 'calendario, torneos, tareas, tiempos y XP idénticos');
+  ok(isDeepStrictEqual(original, await schedule()), 'calendario de torneos y entrenamiento anterior al 21 de noviembre idénticos');
   ok(await p.locator('.task.done').count() === 0, 'JP empieza sin tareas de Germán marcadas');
   await p.locator('.tasks .chk').last().click();
   await p.goto(german);

@@ -18,6 +18,7 @@
   const fmtLong = s => { const d = parse(s); return `${['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'][dow(s)]} ${d.getDate()} de ${MESES[d.getMonth()]}`; };
   const fmtShort = s => { const d = parse(s); return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}`; };
   const todayISO = () => iso(new Date());
+  const singleSession = date => !!D.CONFIG.sesionUnicaDesde && date >= D.CONFIG.sesionUnicaDesde;
 
   function weekNumberFor(dateISO) {
     const start = parse(D.CONFIG.inicio); const d = parse(mondayOf(dateISO));
@@ -241,13 +242,69 @@
     });
   }
 
+  function focusSession(week, day) {
+    const tasks = week.days[day];
+    // Mantén la comparación de discursos y el reto de línea base en sus fechas recolocadas.
+    const main = tasks.find(t => t.moved && (t.type === 'drill' || t.type === 'reto')) || tasks[0];
+    if (!main || main.type === 'libre') return;
+    const date = addDays(week.start, DAYS.indexOf(day));
+    tasks.filter(t => t !== main).forEach(t => week.extras.push({ ...t, date, prio: 3 }));
+    week.days[day] = [main];
+    main.min = 45;
+
+    if (main.type === 'elpais' && !week.light) {
+      const cf = D.CASEFILE_TOPICS.find(x => x.id === main.topic);
+      if (main.video) {
+        const v = main.video;
+        week.extras.push(task(`W${week.n}-xmon-doc`, { type: 'extra', title: `Documental: ${v.t}`, min: v.min, prio: 3,
+          desc: `Material de apoyo para la ficha de ${cf.nombre}. Anota un hecho nuevo que puedas usar en debate.`,
+          links: [{ t: v.t, u: v.u }, D.R.casefileDoc] }));
+        delete main.video;
+      }
+      main.title = cf ? `Lectura de EL PAÍS · ${cf.nombre}` : 'Lectura de EL PAÍS';
+      main.desc = 'Lee con calma una noticia de fondo de Internacional, Economía u Opinión.';
+      main.links = [D.R.elpais, D.R.casefileDoc];
+      main.steps = [
+        `Dedica 40 min a la lectura. ${cf ? 'Si encuentras una noticia sobre el tema de la semana, empieza por ahí. ' : ''}Si la acabas pronto, sigue con otra pieza sobre el mismo asunto.`,
+        main.topic === 'rev'
+          ? 'En los 5 min finales, anota en una ficha para el torneo un hecho nuevo, su fuente y cómo lo usarías.'
+          : 'En los 5 min finales, guarda en el casefile los apuntes de esa lectura: un hecho con su fuente, qué quiere un actor y una posible moción.',
+      ];
+    } else if (main.type === 'judge') {
+      const workshop = main.links.find(l => l.t.startsWith('Taller corto:'));
+      if (workshop) {
+        week.extras.push(task(`W${week.n}-xwed-taller`, { type: 'extra', title: workshop.t, prio: 3,
+          desc: 'Taller de apoyo para la adjudicación de la semana.', links: [workshop] }));
+        main.links = main.links.filter(l => l !== workshop);
+      }
+      main.steps = main.steps.slice(0, -1);
+      main.steps[1] = 'Dedica hasta 38 min a los discursos tomando notas a 1,5x. Salta presentaciones, pausas y deliberación para dejar 7 min para tu decisión y la comparación con el panel.';
+    } else if (main.type === 'rebuild') {
+      main.steps = [...main.steps];
+      main.steps[1] = `Dedica hasta ${45 - main.prep - 7 - 10} min a ver el contexto del debate a 1,5x. Si hay varios discursos previos, céntrate en los fragmentos clave. Pausa justo antes de ${main.role}.`;
+      main.steps[3] = 'En los 10 min finales, ve el discurso real a 1,5x y anota tres diferencias que puedas aplicar en el próximo.';
+    } else if (main.type === 'reto') {
+      main.steps = main.steps.filter(s => !s.startsWith('Si la moción es de un debate'));
+      main.steps.push(`Usa los ${45 - (main.prep || 15) - 7} min restantes para escuchar tu grabación, rellenar la rúbrica y anotar una corrección concreta.`);
+    } else if (main.video || main.type === 'taller') {
+      main.steps = ['Reserva hasta 35 min para ver el vídeo con apuntes. Usa los 10 min finales para trabajar con tus notas. Si el vídeo es más largo, céntrate en el tramo más relevante.', ...main.steps];
+    }
+  }
+
   function buildPlan(state) {
     const tournaments = mergeTournaments(state);
     const weeks = D.WEEKS.map(s => buildWeek(s, tournaments));
     applyLostWeeks(weeks, state.lostWeeks || []);
     applyMoves(weeks, state);
     const index = {};
-    weeks.forEach(w => { DAYS.forEach(d => w.days[d].forEach(t => { t.week = w.n; t.day = d; t.date = addDays(w.start, DAYS.indexOf(d)); index[t.id] = t; })); w.extras.forEach(t => { t.week = w.n; t.day = null; index[t.id] = t; }); });
+    weeks.forEach(w => {
+      DAYS.forEach((d, i) => {
+        const date = addDays(w.start, i);
+        if (singleSession(date)) focusSession(w, d);
+        w.days[d].forEach(t => { t.week = w.n; t.day = d; t.date = date; index[t.id] = t; });
+      });
+      w.extras.forEach(t => { t.week = w.n; t.day = null; index[t.id] = t; });
+    });
     return { weeks, index, tournaments };
   }
 
@@ -390,5 +447,5 @@
   }
   const avg = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0;
 
-  root.ENGINE = { casefileCount, casefileWritten, casefileDone, iso, parse, addDays, dow, mondayOf, DAYS, DAY_ES, MESES, fmtLong, fmtShort, todayISO, weekNumberFor, weekStart, phaseOf, buildPlan, mergeTournaments, loadState, saveState, defaultState, migrate, stats, weekProgress, checkBadges, summaryText, avg, ytId, debateInfo, STORAGE_KEY };
+  root.ENGINE = { casefileCount, casefileWritten, casefileDone, iso, parse, addDays, dow, mondayOf, DAYS, DAY_ES, MESES, fmtLong, fmtShort, todayISO, singleSession, weekNumberFor, weekStart, phaseOf, buildPlan, mergeTournaments, loadState, saveState, defaultState, migrate, stats, weekProgress, checkBadges, summaryText, avg, ytId, debateInfo, STORAGE_KEY };
 })(typeof window !== 'undefined' ? window : globalThis);

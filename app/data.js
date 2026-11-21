@@ -18,6 +18,7 @@ const CONFIG = {
   baselineUltimo: jp ? null : 70.0,          // Elías Ahuja 2026
   version: 3,
   cargaLigeraDesde: '2026-11-10',  // desde este día las tareas pesan menos (unos 45 min al día en vez de 60) y dan el mismo XP
+  sesionUnicaDesde: jp ? null : '2026-11-21',
 };
 
 // ---------- Fases ----------
